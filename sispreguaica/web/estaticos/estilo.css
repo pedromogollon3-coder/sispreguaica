@@ -326,3 +326,5 @@ table.reporte tbody th, table.reporte thead th:first-child { min-width: 260px; }
   .menu .items { flex-direction: row; flex-wrap: wrap; }
   .menu .items .seccion { display: none; }
 }
+label.casilla { flex-direction: row; align-items: center; gap: 10px; font-weight: 500; }
+label.casilla input { width: 20px; height: 20px; min-height: 0; padding: 0; }

@@ -11,3 +11,5 @@ venv/
 *.db-journal
 respaldos/
 .claude/
+fabrica-de-sistemas/
+fabrica-de-sistemas-workspace/
