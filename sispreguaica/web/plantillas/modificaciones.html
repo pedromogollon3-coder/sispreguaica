@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block titulo %}Modificaciones presupuestarias{% endblock %}
+{% block contenido %}
+<h1>Modificaciones presupuestarias {{ ejercicio.anio }}</h1>
+{% if usuario.rol != 'consulta' %}<p class="acciones"><a class="boton" href="/modificaciones/nueva">Nueva modificación</a></p>{% endif %}
+<table class="numeros">
+  <thead><tr><th>N°</th><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Soporte</th><th>Estado</th></tr></thead>
+  <tbody>
+  {% for m in lista %}
+  <tr>
+    <td><a href="/modificaciones/{{ m.id }}">{{ m.numero }}</a></td>
+    <td>{{ m.fecha.strftime('%d/%m/%Y') }}</td>
+    <td>{{ tipos[m.tipo] }}</td>
+    <td class="texto">{{ m.descripcion }}</td>
+    <td class="texto">{{ m.documento_soporte }}</td>
+    <td><span class="estado {{ m.estado }}">{{ m.estado }}</span></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="6" class="vacio">Sin modificaciones.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

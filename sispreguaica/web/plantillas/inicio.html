@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block titulo %}Inicio{% endblock %}
+{% block contenido %}
+<header class="cabecera">
+  <div>
+    <span class="antetitulo">{{ ente }} · Ejercicio {{ ejercicio.anio }}{% if not ejercicio.abierto %} (cerrado){% endif %}</span>
+    <h1>Hola, {{ usuario.nombre.split()[0] }}</h1>
+  </div>
+  <div class="acciones">
+    {% if usuario.rol != 'consulta' %}
+    <a class="boton" href="/comprobantes/nuevo?tipo=G">+ Registrar gasto</a>
+    {% endif %}
+  </div>
+</header>
+
+<section class="cifras" aria-label="Resumen del presupuesto de gastos">
+  <div class="cifra"><span>Presupuesto actualizado</span><strong>{{ r.actualizado|bs }}</strong><small>Asignado más modificaciones</small></div>
+  <div class="cifra"><span><i class="punto com"></i>Comprometido</span><strong>{{ r.comprometido|bs }}</strong><small>Órdenes y contratos</small></div>
+  <div class="cifra"><span><i class="punto cau"></i>Causado</span><strong>{{ r.causado|bs }}</strong><small>Facturas recibidas</small></div>
+  <div class="cifra"><span><i class="punto pag"></i>Pagado</span><strong>{{ r.pagado|bs }}</strong><small>Pagos hechos</small></div>
+  <div class="cifra destacada"><span>Disponible</span><strong>{{ r.disponible|bs }}</strong><small>Lo que aún se puede comprometer</small></div>
+</section>
+
+<div class="columnas">
+  <div class="principal">
+    <section class="tarjeta" aria-labelledby="t-gasto">
+      <div class="cabecera">
+        <h2 id="t-gasto">¿En qué va el gasto?</h2>
+        <a href="/reportes/gastos?nivel=partida">Ver reporte completo</a>
+      </div>
+      <div class="leyenda"><span><i class="pag"></i>Pagado</span><span><i class="cau"></i>Causado sin pagar</span><span><i class="com"></i>Comprometido sin causar</span><span><i class="lib"></i>Disponible</span></div>
+      <div class="barras">
+        {% for b in barras %}
+        <div class="barra-fila">
+          <div class="rotulo"><span><b>{{ b.codigo[:4] }}</b> {{ b.nombre }}</span><span class="sutil">{{ '%.1f'|format(b.pct)|replace('.', ',') }} % comprometido · disp. {{ b.disponible|bs }}</span></div>
+          <svg class="barra" viewBox="0 0 100 10" preserveAspectRatio="none" role="img" aria-label="Pagado {{ '%.0f'|format(b.pag) }} %, causado {{ '%.0f'|format(b.cau) }} %, comprometido {{ '%.0f'|format(b.com) }} %">
+            <rect class="pag" x="0" width="{{ b.pag }}" height="10"/>
+            <rect class="cau" x="{{ b.pag }}" width="{{ b.cau }}" height="10"/>
+            <rect class="com" x="{{ b.pag + b.cau }}" width="{{ b.com }}" height="10"/>
+          </svg>
+        </div>
+        {% else %}
+        <p class="sutil">Todavía no hay presupuesto cargado en este ejercicio.{% if usuario.rol == 'admin' %} <a href="/apertura">Cargar la apertura</a>.{% endif %}</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="tarjeta" aria-labelledby="t-ing">
+      <h2 id="t-ing">Ingresos</h2>
+      <div class="cifras">
+        <div class="cifra"><span>Previsto actualizado</span><strong>{{ r.ing_actualizado|bs }}</strong></div>
+        <div class="cifra"><span>Devengado</span><strong>{{ r.devengado|bs }}</strong></div>
+        <div class="cifra"><span>Recaudado</span><strong>{{ r.cobrado|bs }}</strong></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="secundaria">
+    {% if borradores or escasas %}
+    <section class="tarjeta pendientes" aria-labelledby="t-pend">
+      <h2 id="t-pend">Pendientes</h2>
+      <ul class="lista">
+        {% for m in borradores %}
+        <li><span><a href="/modificaciones/{{ m.id }}">Modificación N° {{ m.numero }}</a><small>Por aprobar · {{ m.descripcion|truncate(50) }}</small></span><span class="estado borrador">borrador</span></li>
+        {% endfor %}
+        {% for p in escasas %}
+        <li><span><a href="/mayor/G/{{ p.id }}">{{ p.cuenta.codigo }}</a><small>{{ p.estructura.codigo }} · poca disponibilidad</small></span><b>{{ p.disponible|bs }}</b></li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    <section class="tarjeta" aria-labelledby="t-ult">
+      <div class="cabecera"><h2 id="t-ult">Últimos registros</h2><a href="/comprobantes">Ver todos</a></div>
+      <ul class="lista">
+        {% for c in ultimos %}
+        <li>
+          <span><a href="/comprobantes/{{ c.id }}">{{ 'Gasto' if c.tipo == 'G' else 'Ingreso' }} N° {{ c.numero }}</a><small>{{ c.fecha.strftime('%d/%m/%Y') }} · {{ (c.beneficiario or c.descripcion)|truncate(40) }}</small></span>
+          <span>{% if c.estado == 'anulado' %}<span class="estado anulado">anulado</span>{% else %}<b>{{ c.total|bs }}</b>{% endif %}</span>
+        </li>
+        {% else %}
+        <li class="sutil">Sin registros todavía.</li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+# Uso:  cp .env.example .env   (y edite SISPREGUAICA_SECRETO)
+#       docker compose up -d
+# Luego abra http://localhost:8000 y entre como admin.
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sispreguaica
+      POSTGRES_USER: sispreguaica
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cambie-esta-clave}
+    volumes:
+      - datos-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sispreguaica"]
+      interval: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://sispreguaica:${POSTGRES_PASSWORD:-cambie-esta-clave}@db:5432/sispreguaica
+      SISPREGUAICA_SECRETO: ${SISPREGUAICA_SECRETO:?Defina SISPREGUAICA_SECRETO en .env}
+      SISPREGUAICA_ADMIN_CLAVE: ${SISPREGUAICA_ADMIN_CLAVE:?Defina SISPREGUAICA_ADMIN_CLAVE en .env (mín. 10 caracteres)}
+      SISPREGUAICA_ENTE: ${SISPREGUAICA_ENTE:-Ente público}
+      SISPREGUAICA_COOKIE_SEGURA: ${SISPREGUAICA_COOKIE_SEGURA:-0}
+    ports:
+      - "127.0.0.1:8000:8000"
+
+volumes:
+  datos-db:

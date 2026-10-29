@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block titulo %}Configuración{% endblock %}
+{% block contenido %}
+<header class="cabecera">
+  <div><span class="antetitulo">Administración</span><h1>Configuración</h1></div>
+</header>
+<form method="post" action="/configuracion" class="tarjeta">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <h2>Datos del ente</h2>
+  <p class="sutil">Aparecen en todas las pantallas, en los reportes impresos y en los archivos de Excel.</p>
+  <div class="rejilla">
+    {% for clave, (titulo, largo) in campos.items() %}
+    <label class="{{ 'ancho' if clave == 'ente' }}">{{ titulo }}
+      <input name="{{ clave }}" value="{{ valores[clave] }}" maxlength="{{ largo }}"
+        {% if clave == 'ente' %}required placeholder="Ej.: Alcaldía del Municipio Guaicaipuro"{% elif clave == 'rif' %}placeholder="G-00000000-0"{% endif %}>
+    </label>
+    {% endfor %}
+  </div>
+  <div><button>Guardar</button></div>
+</form>
+{% endblock %}

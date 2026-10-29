@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titulo %}Comprobantes{% endblock %}
+{% block contenido %}
+<h1>Comprobantes {{ ejercicio.anio }}</h1>
+<p class="acciones">
+  <a class="{{ 'boton' if tipo == '' else 'boton secundario' }}" href="/comprobantes">Todos</a>
+  <a class="{{ 'boton' if tipo == 'G' else 'boton secundario' }}" href="/comprobantes?tipo=G">Gastos</a>
+  <a class="{{ 'boton' if tipo == 'I' else 'boton secundario' }}" href="/comprobantes?tipo=I">Ingresos</a>
+  {% if usuario.rol != 'consulta' %}
+  <a class="boton" href="/comprobantes/nuevo?tipo={{ tipo or 'G' }}">Nuevo comprobante</a>
+  {% endif %}
+</p>
+<table class="numeros">
+  <thead><tr><th>N°</th><th>Fecha</th><th>Tipo</th><th>Origen</th><th>Descripción</th><th>Beneficiario</th><th>Total</th><th>Estado</th></tr></thead>
+  <tbody>
+  {% set origenes = {'APE': 'Apertura', 'MOD': 'Modificación', 'MAN': 'Registro'} %}
+  {% for c in lista %}
+  <tr class="{{ 'tachado' if c.estado == 'anulado' else '' }}">
+    <td><a href="/comprobantes/{{ c.id }}">{{ c.numero }}</a></td>
+    <td>{{ c.fecha.strftime('%d/%m/%Y') }}</td>
+    <td>{{ 'Gasto' if c.tipo == 'G' else 'Ingreso' }}</td>
+    <td>{{ origenes[c.procedencia] }}</td>
+    <td class="texto">{{ c.descripcion }}</td>
+    <td class="texto">{{ c.beneficiario }}</td>
+    <td>{{ c.total|bs }}</td>
+    <td><span class="estado {{ c.estado }}">{{ c.estado }}</span></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="8" class="vacio">Sin comprobantes.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

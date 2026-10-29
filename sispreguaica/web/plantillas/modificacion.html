@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block titulo %}Modificación {{ m.numero }}{% endblock %}
+{% block contenido %}
+<h1>Modificación N° {{ m.numero }} <span class="estado {{ m.estado }}">{{ m.estado }}</span></h1>
+<dl class="ficha">
+  <dt>Tipo</dt><dd>{{ tipos[m.tipo] }}</dd>
+  <dt>Fecha</dt><dd>{{ m.fecha.strftime('%d/%m/%Y') }}</dd>
+  <dt>Descripción</dt><dd>{{ m.descripcion }}</dd>
+  {% if m.documento_soporte %}<dt>Acto administrativo</dt><dd>{{ m.documento_soporte }}</dd>{% endif %}
+  <dt>Elaborada por</dt><dd>{{ m.usuario.nombre }}</dd>
+  {% if m.aprobado_por %}<dt>Aprobada por</dt><dd>{{ m.aprobado_por.nombre }}</dd>{% endif %}
+  {% if m.comprobante_gasto %}<dt>Comprobante de gasto</dt><dd><a href="/comprobantes/{{ m.comprobante_gasto.id }}">N° {{ m.comprobante_gasto.numero }}</a></dd>{% endif %}
+  {% if m.comprobante_ingreso %}<dt>Comprobante de ingreso</dt><dd><a href="/comprobantes/{{ m.comprobante_ingreso.id }}">N° {{ m.comprobante_ingreso.numero }}</a></dd>{% endif %}
+</dl>
+<table class="numeros">
+  <thead><tr><th>Partida</th><th>Denominación</th><th>Disminuye</th><th>Aumenta</th>{% if m.estado == 'borrador' %}<th>Disponible hoy</th>{% endif %}</tr></thead>
+  <tbody>
+  {% set ns = namespace(au=0, di=0) %}
+  {% for l in m.lineas %}
+  {% set p = l.partida_gasto or l.partida_ingreso %}
+  <tr>
+    <td class="codigo">{{ 'I:' if l.partida_ingreso else '' }}{{ p.clave }}</td>
+    <td class="texto">{{ p.cuenta.denominacion }}</td>
+    <td>{% if l.accion == 'DI' %}{{ l.monto|bs }}{% set ns.di = ns.di + l.monto %}{% endif %}</td>
+    <td>{% if l.accion == 'AU' %}{{ l.monto|bs }}{% set ns.au = ns.au + l.monto %}{% endif %}</td>
+    {% if m.estado == 'borrador' %}<td>{{ (p.disponible if l.partida_gasto else p.por_devengar)|bs }}</td>{% endif %}
+  </tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr><th colspan="2">Totales</th><th>{{ ns.di|bs }}</th><th>{{ ns.au|bs }}</th>{% if m.estado == 'borrador' %}<th></th>{% endif %}</tr></tfoot>
+</table>
+<p class="acciones"><button type="button" class="secundario imprimir">Imprimir</button></p>
+{% if usuario.rol == 'admin' %}
+  {% if m.estado == 'borrador' %}
+  <form method="post" action="/modificaciones/{{ m.id }}/aprobar" class="confirmar" data-mensaje="¿Aprobar la modificación N° {{ m.numero }}? Se actualizarán los saldos.">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button>Aprobar modificación</button>
+  </form>
+  {% endif %}
+  {% if m.estado != 'anulada' %}
+  <h2>Anular</h2>
+  <form method="post" action="/modificaciones/{{ m.id }}/anular" class="en-linea confirmar" data-mensaje="¿Anular la modificación N° {{ m.numero }}?">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Motivo <input name="motivo" required></label>
+    <button class="peligro">Anular</button>
+  </form>
+  {% endif %}
+{% endif %}
+{% endblock %}

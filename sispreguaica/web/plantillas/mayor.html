@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block titulo %}Mayor de la partida{% endblock %}
+{% block contenido %}
+<h1>Mayor de la partida</h1>
+<p class="codigo grande">{{ partida.clave }}</p>
+<p>{{ partida.cuenta.denominacion }}{% if tipo == 'G' %} · {{ partida.estructura.denominacion }}{% endif %}</p>
+<div class="cifras">
+  <div><span>Actualizado</span><strong>{{ partida.actualizado|bs }}</strong></div>
+  {% if tipo == 'G' %}
+  <div><span>Comprometido</span><strong>{{ partida.comprometido|bs }}</strong></div>
+  <div><span>Causado</span><strong>{{ partida.causado|bs }}</strong></div>
+  <div><span>Pagado</span><strong>{{ partida.pagado|bs }}</strong></div>
+  <div class="destacada"><span>Disponible</span><strong>{{ partida.disponible|bs }}</strong></div>
+  {% else %}
+  <div><span>Devengado</span><strong>{{ partida.devengado|bs }}</strong></div>
+  <div><span>Cobrado</span><strong>{{ partida.cobrado|bs }}</strong></div>
+  {% endif %}
+</div>
+<table class="numeros">
+  <thead><tr><th>Fecha</th><th>N°</th><th>Descripción</th><th>Operación</th><th>Monto</th><th>Estado</th></tr></thead>
+  <tbody>
+  {% for m in movimientos %}
+  <tr class="{{ 'tachado' if m.comprobante.estado == 'anulado' else '' }}">
+    <td>{{ m.comprobante.fecha.strftime('%d/%m/%Y') }}</td>
+    <td><a href="/comprobantes/{{ m.comprobante.id }}">{{ m.comprobante.numero }}</a></td>
+    <td class="texto">{{ m.comprobante.descripcion }}</td>
+    <td>{{ OPERACIONES[tipo][m.operacion].denominacion }}</td>
+    <td>{{ m.monto|bs }}</td>
+    <td>{{ m.comprobante.estado }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="6" class="vacio">Sin movimientos.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

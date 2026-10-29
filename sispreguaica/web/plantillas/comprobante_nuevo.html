@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% set gasto = tipo == 'G' %}
+{% block titulo %}Registrar {{ 'gasto' if gasto else 'ingreso' }}{% endblock %}
+{% set ayudas = {
+  'PC': ('Precompromiso', 'Reserva el dinero mientras se tramita la compra (solicitud o requisición).'),
+  'CS': ('Compromiso', 'Orden de compra, de servicio o contrato firmado.'),
+  'GC': ('Causado', 'Llegó la factura y se recibió conforme.'),
+  'PG': ('Pago', 'Se emitió la transferencia o el cheque.'),
+  'CCP': ('Todo de una vez', 'Compromete, causa y paga en un paso: caja chica, viáticos.'),
+  'CG': ('Compromiso y causado', 'Se compromete y factura a la vez, como los servicios básicos.'),
+  'CP': ('Causado y pago', 'Factura que se paga en el acto, ya comprometida.'),
+  'LP': ('Liberar precompromiso', 'Devuelve a disponible lo reservado que no se usará.'),
+  'DEV': ('Devengado', 'Nace el derecho a cobrar: liquidación o factura emitida.'),
+  'COB': ('Recaudado', 'Entró el dinero de un derecho ya devengado.'),
+  'DC': ('Devengado y recaudado', 'Se liquida y se cobra en el mismo acto.'),
+} %}
+{% set orden = ['PC', 'CS', 'GC', 'PG', 'CCP', 'CG', 'CP', 'LP'] if gasto else ['DEV', 'COB', 'DC'] %}
+{% block contenido %}
+<header class="cabecera">
+  <div><span class="antetitulo">Ejercicio {{ ejercicio.anio }}</span><h1>Registrar {{ 'un gasto' if gasto else 'un ingreso' }}</h1></div>
+  <div class="acciones"><a href="/comprobantes/nuevo?tipo={{ 'I' if gasto else 'G' }}">Registrar {{ 'un ingreso' if gasto else 'un gasto' }}</a></div>
+</header>
+
+{% if not partidas %}
+<p class="aviso error">No hay partidas de {{ 'gasto' if gasto else 'ingreso' }} en este ejercicio. {% if usuario.rol == 'admin' %}<a href="/apertura">Cargue primero la apertura</a>.{% else %}El administrador debe cargar primero la apertura.{% endif %}</p>
+{% else %}
+<script type="application/json" id="datos-partidas">{{ datos|tojson }}</script>
+<form method="post" action="/comprobantes" id="registro" data-tipo="{{ tipo }}" class="columnas">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="tipo" value="{{ tipo }}">
+  <div class="principal">
+    <section class="tarjeta" aria-labelledby="p1">
+      <h2 id="p1" class="paso"><span class="num">1</span>¿Qué vas a registrar?</h2>
+      <div class="operaciones" role="radiogroup" aria-labelledby="p1">
+        {% for codigo in orden %}
+        <label class="operacion">
+          <input type="radio" name="operacion_comun" value="{{ codigo }}" required {% if loop.first %}checked{% endif %}>
+          <span class="caja"><span class="codigo-op">{{ codigo }}</span><b>{{ ayudas[codigo][0] }}</b><small>{{ ayudas[codigo][1] }}</small></span>
+        </label>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="tarjeta" aria-labelledby="p2">
+      <h2 id="p2" class="paso"><span class="num">2</span>¿De qué partida sale{{ '' if gasto else ' o entra' }} y cuánto?</h2>
+      <datalist id="partidas">
+        {% for p in partidas %}
+        <option value="{{ p.clave }}">{{ p.cuenta.denominacion }}{% if gasto %} · {{ p.estructura.denominacion }}{% endif %}</option>
+        {% endfor %}
+      </datalist>
+      <div class="lineas" id="lineas">
+        <div class="linea">
+          <label>Partida <span class="ayuda">Escriba el código o el nombre y elija de la lista</span>
+            <input name="partida" list="partidas" autocomplete="off" placeholder="{{ '01.01.00.00.51|4.02.01.01.00|01' if gasto else '3.01.00.00.00' }}" required>
+          </label>
+          <label>Monto (Bs.) <input name="monto" class="monto" inputmode="decimal" placeholder="0,00" required></label>
+          <button type="button" class="secundario quitar" aria-label="Quitar esta partida">Quitar</button>
+          <p class="estado-linea" aria-live="polite"></p>
+        </div>
+      </div>
+      <button type="button" class="agregar" id="agregar-linea">+ Agregar otra partida{{ ' (por ejemplo, el IVA)' if gasto }}</button>
+    </section>
+
+    <section class="tarjeta" aria-labelledby="p3">
+      <h2 id="p3" class="paso"><span class="num">3</span>Datos del documento</h2>
+      <div class="rejilla">
+        <label>Fecha <input type="date" name="fecha" value="{{ hoy }}" min="{{ ejercicio.anio }}-01-01" max="{{ ejercicio.anio }}-12-31" required></label>
+        <label>N° de documento <input name="documento" maxlength="60" placeholder="{{ 'Orden de compra, factura…' if gasto else 'Planilla, liquidación…' }}"></label>
+        <label class="ancho">{{ 'Beneficiario' if gasto else 'Contribuyente u origen' }} <input name="beneficiario" maxlength="200"></label>
+        <label class="ancho">Concepto <textarea name="descripcion" rows="2" required placeholder="Describa brevemente qué se está registrando"></textarea></label>
+      </div>
+    </section>
+  </div>
+
+  <aside class="secundaria">
+    <section class="tarjeta resumen pegajoso" aria-labelledby="t-res">
+      <h2 id="t-res">Resumen</h2>
+      <dl>
+        <dt>Operación</dt><dd id="res-operacion">—</dd>
+        <dt>Partidas</dt><dd id="res-partidas">0</dd>
+        <dt class="total">Total</dt><dd class="total" id="res-total">0,00</dd>
+      </dl>
+      <p class="sutil" id="res-aviso">{{ 'El sistema revisa que haya disponibilidad, que no se cause más de lo comprometido ni se pague más de lo causado.' if gasto else 'El sistema revisa que no se recaude más de lo devengado.' }}</p>
+      <div class="botones">
+        <button id="guardar">Guardar</button>
+        <a class="boton secundario" href="/">Cancelar</a>
+      </div>
+    </section>
+  </aside>
+</form>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Sispreguaica{% endblock %} · Sispreguaica</title>
+  <link rel="stylesheet" href="/estaticos/estilo.css">
+  <script src="/estaticos/app.js" defer></script>
+</head>
+<body>
+{% macro icono(nombre) -%}
+<svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
+{%- if nombre == 'inicio' %}<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>
+{%- elif nombre == 'gasto' %}<path d="M12 5v14M5 12h14"/>
+{%- elif nombre == 'ingreso' %}<path d="M12 19V5M6 11l6-6 6 6"/>
+{%- elif nombre == 'comprobantes' %}<path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h7"/>
+{%- elif nombre == 'modificaciones' %}<path d="M7 7h13l-4-4M17 17H4l4 4"/>
+{%- elif nombre == 'partidas' %}<path d="M4 6h16M4 12h16M4 18h10"/>
+{%- elif nombre == 'reportes' %}<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>
+{%- elif nombre == 'catalogo' %}<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/>
+{%- elif nombre == 'ajustes' %}<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>
+{%- endif %}</svg>
+{%- endmacro %}
+{% macro item(url, texto, nombre, activo) -%}
+<a class="item{% if activo %} activo{% endif %}" href="{{ url }}"{% if activo %} aria-current="page"{% endif %}>{{ icono(nombre) }}{{ texto }}</a>
+{%- endmacro %}
+
+{% if usuario %}
+<div class="armazon">
+  <nav class="lateral" aria-label="Menú principal">
+    <a class="logo" href="/"><span class="logo-s">S</span><span><b>Sispreguaica</b><small>Presupuesto público</small></span></a>
+    <details class="menu" open>
+      <summary>Menú</summary>
+      <div class="items">
+    {{ item('/', 'Inicio', 'inicio', ruta == '/') }}
+    {% if usuario.rol != 'consulta' %}
+    {{ item('/comprobantes/nuevo?tipo=G', 'Registrar gasto', 'gasto', menu == 'registrar-G') }}
+    {{ item('/comprobantes/nuevo?tipo=I', 'Registrar ingreso', 'ingreso', menu == 'registrar-I') }}
+    {% endif %}
+    {{ item('/comprobantes', 'Comprobantes', 'comprobantes', ruta.startswith('/comprobantes') and not menu) }}
+    {{ item('/modificaciones', 'Modificaciones', 'modificaciones', ruta.startswith('/modificaciones')) }}
+    {{ item('/gastos', 'Partidas de gasto', 'partidas', ruta.startswith('/gastos') or ruta.startswith('/mayor/G')) }}
+    {{ item('/ingresos', 'Partidas de ingreso', 'partidas', ruta.startswith('/ingresos') or ruta.startswith('/mayor/I')) }}
+    {{ item('/reportes/gastos?nivel=partida', 'Reportes', 'reportes', ruta.startswith('/reportes')) }}
+
+    <span class="seccion">Catálogos</span>
+    {{ item('/estructuras', 'Estructura programática', 'catalogo', ruta == '/estructuras') }}
+    {{ item('/cuentas', 'Clasificador de cuentas', 'catalogo', ruta == '/cuentas') }}
+    {{ item('/fuentes', 'Fuentes de financiamiento', 'catalogo', ruta == '/fuentes') }}
+    {% if usuario.rol == 'admin' %}
+    <span class="seccion">Administración</span>
+    {{ item('/configuracion', 'Configuración', 'ajustes', ruta == '/configuracion') }}
+    {{ item('/apertura', 'Apertura del presupuesto', 'ajustes', ruta == '/apertura') }}
+    {{ item('/ejercicios', 'Ejercicios fiscales', 'ajustes', ruta == '/ejercicios') }}
+    {{ item('/usuarios', 'Usuarios', 'ajustes', ruta == '/usuarios') }}
+    {{ item('/bitacora', 'Bitácora', 'ajustes', ruta == '/bitacora') }}
+    {% endif %}
+      </div>
+    </details>
+
+    <div class="pie">
+      {% if ejercicios %}
+      <form method="post" action="/ejercicio/elegir">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label class="ejercicio">Ejercicio fiscal
+          <select name="ejercicio_id" class="auto-enviar">
+            {% for e in ejercicios %}
+            <option value="{{ e.id }}" {% if ejercicio and e.id == ejercicio.id %}selected{% endif %}>{{ e.anio }}{% if not e.abierto %} (cerrado){% endif %}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </form>
+      {% endif %}
+      <span class="quien">{{ usuario.nombre }}<small>{{ {'admin': 'Administrador', 'analista': 'Analista', 'consulta': 'Consulta'}[usuario.rol] }}</small></span>
+      <form method="post" action="/salir">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button>Salir</button>
+      </form>
+    </div>
+  </nav>
+
+  <main class="contenido">
+    {% for tipo, texto in avisos %}
+    <div class="aviso {{ tipo }}" role="status">{{ texto }}</div>
+    {% endfor %}
+    {% block contenido %}{% endblock %}
+    <footer class="pie-pagina">{{ ente }} · Sispreguaica · Clasificador Presupuestario ONAPRE 2025</footer>
+  </main>
+</div>
+{% else %}
+{% block publico %}{% endblock %}
+{% endif %}
+</body>
+</html>

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block titulo %}Clasificador de cuentas{% endblock %}
+{% block contenido %}
+<h1>Clasificador presupuestario</h1>
+<form method="get" class="en-linea">
+  <label>Buscar <input name="q" value="{{ q }}" placeholder="4.03.10 o vigilancia"></label>
+  <label>Tipo
+    <select name="tipo">
+      <option value="">Todas</option>
+      <option value="G" {% if tipo == 'G' %}selected{% endif %}>Egresos (4.xx)</option>
+      <option value="I" {% if tipo == 'I' %}selected{% endif %}>Ingresos (3.xx)</option>
+    </select>
+  </label>
+  <button class="secundario">Buscar</button>
+</form>
+<table>
+  <thead><tr><th>Código</th><th>Denominación</th><th>Imputable</th></tr></thead>
+  <tbody>
+  {% for c in lista %}
+  <tr class="{{ '' if c.imputable else 'grupo' }}"><td class="codigo">{{ c.codigo }}</td><td>{{ c.denominacion }}</td><td>{{ 'sí' if c.imputable else '' }}</td></tr>
+  {% else %}
+  <tr><td colspan="3" class="vacio">Sin resultados.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% if lista|length == 500 %}<p class="sutil">Se muestran las primeras 500; afine la búsqueda.</p>{% endif %}
+
+{% if usuario.rol == 'admin' %}
+<h2>Importar cuentas</h2>
+<p>Suba un CSV con las columnas <code>codigo</code> y <code>denominacion</code> (por ejemplo el clasificador de ingresos 3.xx). Las cuentas existentes se actualizan y las nuevas se agregan. <a href="/plantillas/cuentas.csv">Descargar plantilla</a>.</p>
+<form method="post" action="/cuentas/importar" enctype="multipart/form-data" class="en-linea">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="file" name="archivo" accept=".csv" required>
+  <button>Importar</button>
+</form>
+{% endif %}
+{% endblock %}

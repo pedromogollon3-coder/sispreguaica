@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block titulo %}Nueva modificación{% endblock %}
+{% macro linea(accion) -%}
+<div class="linea">
+  <input type="hidden" name="accion" value="{{ accion }}">
+  <label>Partida <input name="partida" list="partidas" autocomplete="off" placeholder="Código o nombre"></label>
+  <label>Monto (Bs.) <input name="monto" class="monto" inputmode="decimal" placeholder="0,00"></label>
+  <button type="button" class="secundario quitar" aria-label="Quitar esta partida">Quitar</button>
+  <p class="estado-linea" aria-live="polite"></p>
+</div>
+{%- endmacro %}
+{% block contenido %}
+<script type="application/json" id="datos-partidas">{{ datos|tojson }}</script>
+<form method="post" action="/modificaciones" id="modificacion" class="contenido-form">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <header class="cabecera">
+    <div><span class="antetitulo">Modificación presupuestaria · nueva</span><h1 id="titulo-mod">Traspaso de créditos</h1></div>
+    <div class="segmentos" role="radiogroup" aria-label="Tipo de modificación">
+      {% for k, v in [('TRASPASO', 'Traspaso'), ('CREDITO', 'Crédito adicional'), ('RECTIFICA', 'Rectificación'), ('INSUBSIST', 'Insubsistencia')] %}
+      <label><input type="radio" name="tipo" value="{{ k }}" data-titulo="{{ tipos[k] }}" {% if loop.first %}checked{% endif %}>{{ v }}</label>
+      {% endfor %}
+    </div>
+  </header>
+
+  <section class="tarjeta" aria-label="Datos del acto administrativo">
+    <div class="rejilla">
+      <label>Fecha <input type="date" name="fecha" value="{{ hoy }}" min="{{ ejercicio.anio }}-01-01" max="{{ ejercicio.anio }}-12-31" required></label>
+      <label>Acto que lo autoriza <input name="documento_soporte" maxlength="200" placeholder="Resolución, acuerdo, decreto…"></label>
+      <label class="ancho">Motivo <input name="descripcion" maxlength="500" required placeholder="¿Para qué se hace esta modificación?"></label>
+    </div>
+  </section>
+
+  <datalist id="partidas">
+    {% for p in partidas_g %}<option value="{{ p.clave }}">{{ p.cuenta.denominacion }} · {{ p.estructura.denominacion }}</option>{% endfor %}
+    {% for p in partidas_i %}<option value="I:{{ p.clave }}">Ingreso · {{ p.cuenta.denominacion }}</option>{% endfor %}
+  </datalist>
+
+  <div class="columnas">
+    <section class="tarjeta mitad columna-mod" id="col-ceden" data-accion="DI" aria-labelledby="t-ceden">
+      <h2 id="t-ceden"><svg viewBox="0 0 24 24" stroke="#9A5B00" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg><span class="titulo-col">Ceden (disminuyen)</span></h2>
+      <p class="sutil ayuda-col">Partidas de las que sale el dinero. Deben tener disponibilidad.</p>
+      <div class="lineas">{{ linea('DI') }}</div>
+      <button type="button" class="agregar">+ Agregar partida</button>
+      <div class="subtotal"><span>Total</span><b class="suma">0,00</b></div>
+    </section>
+    <section class="tarjeta mitad columna-mod" id="col-reciben" data-accion="AU" aria-labelledby="t-reciben">
+      <h2 id="t-reciben"><svg viewBox="0 0 24 24" stroke="#0B4F6C" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg><span class="titulo-col">Reciben (aumentan)</span></h2>
+      <p class="sutil ayuda-col">Partidas que reciben el dinero.</p>
+      <div class="lineas">{{ linea('AU') }}</div>
+      <button type="button" class="agregar">+ Agregar partida</button>
+      <div class="subtotal"><span>Total</span><b class="suma">0,00</b></div>
+    </section>
+  </div>
+
+  <section class="verificacion" id="verificacion" aria-live="polite">
+    <div class="mensaje">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>
+      <div><b id="ver-titulo">Agregue las partidas</b><span id="ver-detalle">Se guarda en borrador; los saldos cambian cuando un administrador la aprueba.</span></div>
+    </div>
+    <div class="botones">
+      <a class="boton secundario" href="/modificaciones">Cancelar</a>
+      <button>Guardar y enviar a aprobación</button>
+    </div>
+  </section>
+</form>
+{% endblock %}

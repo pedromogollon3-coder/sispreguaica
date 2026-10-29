@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}Estructura programática{% endblock %}
+{% block contenido %}
+<h1>Estructura programática {{ ejercicio.anio }}</h1>
+<table>
+  <thead><tr><th>Código</th><th>Denominación</th><th>Unidad ejecutora</th></tr></thead>
+  <tbody>
+  {% for e in lista %}
+  <tr><td class="codigo"><a href="/gastos?estructura={{ e.codigo }}">{{ e.codigo }}</a></td><td>{{ e.denominacion }}</td><td>{{ e.unidad_ejecutora }}</td></tr>
+  {% else %}
+  <tr><td colspan="3" class="vacio">Todavía no hay estructuras en este ejercicio.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% if usuario.rol != 'consulta' %}
+<h2>Agregar estructura</h2>
+<form method="post" action="/estructuras" class="rejilla">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label>Código <input name="codigo" placeholder="01.02.00.00.51" required pattern="[0-9]+(\.[0-9]+)*"></label>
+  <label>Denominación <input name="denominacion" required></label>
+  <label>Unidad ejecutora <input name="unidad"></label>
+  <button>Agregar</button>
+</form>
+<p class="sutil">Use el formato de su instructivo, por ejemplo Sector.Programa.Subprograma.Proyecto.Actividad.</p>
+{% endif %}
+{% endblock %}

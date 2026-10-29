@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block titulo %}Partidas de ingreso{% endblock %}
+{% block contenido %}
+<h1>Presupuesto de ingresos {{ ejercicio.anio }}</h1>
+<div class="desplazable">
+<table class="numeros">
+  <thead><tr><th>Cuenta</th><th>Previsto</th><th>Aumentos</th><th>Disminuciones</th><th>Actualizado</th><th>Devengado</th><th>Cobrado</th><th>Por devengar</th></tr></thead>
+  <tbody>
+  {% for p in lista %}
+  <tr>
+    <td class="texto"><a class="codigo" href="/mayor/I/{{ p.id }}">{{ p.cuenta.codigo }}</a> <span class="denom">{{ p.cuenta.denominacion }}</span></td>
+    <td>{{ p.previsto|bs }}</td><td>{{ p.aumento|bs }}</td><td>{{ p.disminucion|bs }}</td>
+    <td>{{ p.actualizado|bs }}</td><td>{{ p.devengado|bs }}</td><td>{{ p.cobrado|bs }}</td><td><strong>{{ p.por_devengar|bs }}</strong></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="8" class="vacio">No hay partidas de ingreso. Cargue la apertura o agregue una.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if usuario.rol != 'consulta' %}
+<h2>Agregar partida de ingreso</h2>
+<form method="post" action="/ingresos" class="en-linea">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label>Cuenta <input name="cuenta" placeholder="3.01.00.00.00" required></label>
+  <button>Agregar</button>
+</form>
+{% endif %}
+{% endblock %}

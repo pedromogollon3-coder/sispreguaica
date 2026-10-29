@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}Apertura del presupuesto{% endblock %}
+{% block contenido %}
+<h1>Apertura del presupuesto {{ ejercicio.anio }}</h1>
+<p>Cargue la ley u ordenanza de presupuesto desde un archivo CSV (Excel → Guardar como → CSV). Cada archivo genera un comprobante de apertura; si algo no cuadra, no se registra nada.</p>
+<ul>
+  <li><strong>Gastos:</strong> columnas <code>estructura</code>, <code>cuenta</code>, <code>fuente</code>, <code>monto</code>. <a href="/plantillas/apertura_gastos.csv">Plantilla</a></li>
+  <li><strong>Ingresos:</strong> columnas <code>cuenta</code>, <code>monto</code>. <a href="/plantillas/apertura_ingresos.csv">Plantilla</a></li>
+</ul>
+<p class="sutil">Las estructuras deben existir antes y las cuentas deben ser de último nivel del clasificador.</p>
+<form method="post" action="/apertura" enctype="multipart/form-data" class="rejilla">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label>Presupuesto
+    <select name="tipo"><option value="G">Gastos</option><option value="I">Ingresos</option></select>
+  </label>
+  <label>Fecha <input type="date" name="fecha" value="{{ hoy }}" required></label>
+  <label>Archivo <input type="file" name="archivo" accept=".csv" required></label>
+  <button>Cargar apertura</button>
+</form>
+{% if hechas %}
+<h2>Aperturas registradas</h2>
+<ul>
+  {% for c in hechas %}<li><a href="/comprobantes/{{ c.id }}">N° {{ c.numero }}</a> · {{ c.descripcion }} · Bs. {{ c.total|bs }} · {{ c.estado }}</li>{% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

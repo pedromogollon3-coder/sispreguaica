@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block titulo %}Comprobante {{ c.numero }}{% endblock %}
+{% block contenido %}
+{% set origenes = {'APE': 'Apertura', 'MOD': 'Modificación presupuestaria', 'MAN': 'Registro'} %}
+<h1>Comprobante N° {{ c.numero }} <span class="estado {{ c.estado }}">{{ c.estado }}</span></h1>
+<dl class="ficha">
+  <dt>Tipo</dt><dd>{{ 'Gasto' if c.tipo == 'G' else 'Ingreso' }} · {{ origenes[c.procedencia] }}{% if origen %} (<a href="/modificaciones/{{ origen.id }}">modificación N° {{ origen.numero }}</a>){% endif %}</dd>
+  <dt>Fecha</dt><dd>{{ c.fecha.strftime('%d/%m/%Y') }}</dd>
+  <dt>Descripción</dt><dd>{{ c.descripcion }}</dd>
+  {% if c.beneficiario %}<dt>Beneficiario</dt><dd>{{ c.beneficiario }}</dd>{% endif %}
+  {% if c.documento %}<dt>Documento</dt><dd>{{ c.documento }}</dd>{% endif %}
+  <dt>Registrado por</dt><dd>{{ c.usuario.nombre }} · {{ c.creado_en.strftime('%d/%m/%Y %H:%M') if c.creado_en else '' }}</dd>
+  {% if c.estado == 'anulado' %}<dt>Motivo de anulación</dt><dd>{{ c.motivo_anulacion }}</dd>{% endif %}
+</dl>
+<table class="numeros">
+  <thead><tr><th>Partida</th><th>Denominación</th><th>Operación</th><th>Monto</th></tr></thead>
+  <tbody>
+  {% for m in c.movimientos %}
+  {% set p = m.partida_gasto or m.partida_ingreso %}
+  <tr>
+    <td><a class="codigo" href="/mayor/{{ c.tipo }}/{{ p.id }}">{{ p.clave }}</a></td>
+    <td class="texto">{{ p.cuenta.denominacion }}</td>
+    <td>{{ m.operacion }} · {{ OPERACIONES[c.tipo][m.operacion].denominacion }}</td>
+    <td>{{ m.monto|bs }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr><th colspan="3">Total</th><th>{{ c.total|bs }}</th></tr></tfoot>
+</table>
+<p class="acciones"><button type="button" class="secundario imprimir">Imprimir</button></p>
+{% if usuario.rol == 'admin' and c.estado == 'activo' and c.procedencia != 'MOD' %}
+<h2>Anular</h2>
+<form method="post" action="/comprobantes/{{ c.id }}/anular" class="en-linea confirmar" data-mensaje="¿Anular el comprobante N° {{ c.numero }}? Se revierten sus efectos.">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label>Motivo <input name="motivo" required></label>
+  <button class="peligro">Anular comprobante</button>
+</form>
+{% endif %}
+{% endblock %}

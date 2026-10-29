@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block titulo %}Ejercicios fiscales{% endblock %}
+{% block contenido %}
+<h1>Ejercicios fiscales</h1>
+<table>
+  <thead><tr><th>Año</th><th>Estado</th><th></th></tr></thead>
+  <tbody>
+  {% for e in ejercicios %}
+  <tr>
+    <td>{{ e.anio }}</td>
+    <td>{% if e.abierto %}<span class="estado activo">abierto</span>{% else %}<span class="estado anulado">cerrado</span>{% endif %}</td>
+    <td>
+      <form method="post" action="/ejercicios/{{ e.id }}/estado" class="confirmar" data-mensaje="¿{{ 'Cerrar' if e.abierto else 'Reabrir' }} el ejercicio {{ e.anio }}?">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button class="secundario">{{ 'Cerrar' if e.abierto else 'Reabrir' }}</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<h2>Abrir un ejercicio nuevo</h2>
+<form method="post" action="/ejercicios" class="en-linea">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label>Año <input name="anio" type="number" min="2000" max="2100" required></label>
+  <button>Crear</button>
+</form>
+<p class="sutil">Con el ejercicio cerrado no se aceptan registros ni anulaciones.</p>
+{% endblock %}

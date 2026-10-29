@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sispreguaica"
+version = "0.1.0"
+description = "Sispreguaica: sistema de presupuesto público (gastos e ingresos) para entes venezolanos, basado en el Clasificador ONAPRE 2025."
+authors = [{ name = "Dr. Pedro Mogollón" }]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "sqlalchemy>=2.0",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.9",
+    "itsdangerous>=2.1",
+    "openpyxl>=3.1",
+]
+
+[project.optional-dependencies]
+postgres = ["psycopg[binary]>=3.1"]
+pruebas = ["pytest>=8", "httpx>=0.27"]
+
+[project.scripts]
+sispreguaica = "sispreguaica.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["sispreguaica*"]
+
+[tool.setuptools.package-data]
+sispreguaica = ["datos/*.csv", "web/plantillas/*.html", "web/estaticos/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

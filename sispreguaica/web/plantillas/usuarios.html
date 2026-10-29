@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block titulo %}Usuarios{% endblock %}
+{% block contenido %}
+<h1>Usuarios</h1>
+<table>
+  <thead><tr><th>Login</th><th>Nombre</th><th>Rol</th><th>Estado</th></tr></thead>
+  <tbody>
+  {% for u in lista %}<tr><td class="codigo">{{ u.login }}</td><td>{{ u.nombre }}</td><td>{{ u.rol }}</td><td>{{ 'activo' if u.activo else 'inactivo' }}</td></tr>{% endfor %}
+  </tbody>
+</table>
+<h2>Crear o modificar usuario</h2>
+<p class="sutil">Si el login ya existe, se actualizan sus datos. Deje la clave en blanco para no cambiarla. Roles: <strong>admin</strong> aprueba y administra; <strong>analista</strong> registra; <strong>consulta</strong> solo ve.</p>
+<form method="post" action="/usuarios" class="rejilla">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label>Login <input name="login" required pattern="[A-Za-z_][A-Za-z0-9_]*"></label>
+  <label>Nombre <input name="nombre"></label>
+  <label>Rol <select name="rol"><option>consulta</option><option>analista</option><option>admin</option></select></label>
+  <label>Clave (mín. 10) <input name="clave" type="password" autocomplete="new-password" minlength="10"></label>
+  <label class="casilla"><input type="checkbox" name="activo" value="1" checked> Activo</label>
+  <button>Guardar</button>
+</form>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block titulo %}Bitácora{% endblock %}
+{% block contenido %}
+<h1>Bitácora</h1>
+<p class="sutil">Últimas 300 acciones registradas.</p>
+<table>
+  <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Detalle</th></tr></thead>
+  <tbody>
+  {% for b in lista %}
+  <tr><td>{{ b.fecha.strftime('%d/%m/%Y %H:%M') if b.fecha else '' }}</td><td>{{ b.usuario.login if b.usuario else '' }}</td><td class="codigo">{{ b.accion }}</td><td>{{ b.detalle }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

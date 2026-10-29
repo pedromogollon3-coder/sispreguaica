@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block titulo %}{{ r.titulo }}{% endblock %}
+{% set gasto = tipo == 'gastos' %}
+{% set base_col = 'actualizado' %}
+{% set ejec_col = 'causado' if gasto else 'cobrado' %}
+{% block contenido %}
+<form method="get" class="contenido-form">
+<header class="cabecera">
+  <div><span class="antetitulo">{{ ente }} · Reportes</span><h1>{{ r.titulo }}</h1></div>
+  <div class="acciones no-imprimir">
+    <button class="exito" name="formato" value="xlsx">Descargar Excel</button>
+    <button class="secundario" name="formato" value="csv">CSV</button>
+    <button type="button" class="secundario imprimir">Imprimir</button>
+  </div>
+</header>
+
+<section class="filtros no-imprimir" aria-label="Filtros">
+  <div class="en-linea">
+    <label>Presupuesto
+      <select class="ir-a">
+        <option value="/reportes/gastos?nivel={{ nivel }}" {% if gasto %}selected{% endif %}>Gastos</option>
+        <option value="/reportes/ingresos?nivel={{ nivel }}" {% if not gasto %}selected{% endif %}>Ingresos</option>
+      </select>
+    </label>
+    <label>Agrupar por
+      <select name="nivel" class="auto-enviar">
+        {% for k, v in [('partida', 'Partida (4.01, 4.02…)' if gasto else 'Ramo (3.01…)'), ('generica', 'Genérica'), ('especifica', 'Específica'), ('detalle', 'Detalle por estructura' if gasto else 'Sub-específica')] %}
+        <option value="{{ k }}" {% if nivel == k %}selected{% endif %}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    {% if gasto %}
+    <label>Estructura
+      <select name="estructura" class="auto-enviar">
+        <option value="">Todas</option>
+        {% for e in estructuras %}<option value="{{ e.codigo }}" {% if estructura == e.codigo %}selected{% endif %}>{{ e.codigo }} {{ e.denominacion }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    <label>Hasta la fecha <input type="date" name="hasta" value="{{ hasta }}" class="auto-enviar"></label>
+  </div>
+</section>
+</form>
+
+<div class="desplazable">
+<table class="numeros reporte">
+  <thead><tr>
+    <th class="texto" scope="col">{{ 'Partida' if gasto else 'Cuenta' }}</th>
+    {% for c, t in r.columnas %}<th scope="col">{{ t }}</th>{% endfor %}
+    <th class="texto" scope="col">% {{ 'causado' if gasto else 'recaudado' }}</th>
+  </tr></thead>
+  <tbody>
+  {% for f in r.filas %}
+  {% set act = f.valores[base_col] %}
+  {% set pct = (f.valores[ejec_col] / act * 100) if act > 0 else 0 %}
+  <tr>
+    <th scope="row" class="texto"><span class="codigo">{{ f.codigo }}</span><span class="denom">{{ f.denominacion }}</span></th>
+    {% for c, _ in r.columnas %}<td class="{{ 'fuerte' if c in ('actualizado', 'disponible') }}{{ ' negativo' if c == 'disminucion' and f.valores[c] > 0 }}{{ ' positivo' if c == 'aumento' and f.valores[c] > 0 }}">{{ f.valores[c]|bs }}</td>{% endfor %}
+    <td class="texto"><svg class="mini-barra" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect x="0" width="{{ [pct, 100]|min }}" height="8"/></svg>{{ '%.1f'|format(pct)|replace('.', ',') }} %</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="{{ r.columnas|length + 2 }}" class="vacio">Sin datos para estos filtros.</td></tr>
+  {% endfor %}
+  </tbody>
+  {% set act = r.totales[base_col] %}
+  <tfoot><tr>
+    <th class="texto" scope="row">TOTAL</th>
+    {% for c, _ in r.columnas %}<td>{{ r.totales[c]|bs }}</td>{% endfor %}
+    <td class="texto">{{ '%.1f'|format((r.totales[ejec_col] / act * 100) if act > 0 else 0)|replace('.', ',') }} %</td>
+  </tr></tfoot>
+</table>
+</div>
+<p class="sutil no-imprimir">{% if gasto and nivel == 'detalle' %}Cada fila es una partida con su estructura y fuente.{% else %}Para ver cada partida con su estructura, agrupe por «Detalle por estructura».{% endif %} El mayor analítico de una partida se abre desde <a href="{{ '/gastos' if gasto else '/ingresos' }}">Partidas</a>.</p>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block titulo %}Partidas de gasto{% endblock %}
+{% block contenido %}
+<h1>Presupuesto de gastos {{ ejercicio.anio }}</h1>
+<form method="get" class="en-linea">
+  <label>Estructura
+    <select name="estructura" class="auto-enviar">
+      <option value="">Todas</option>
+      {% for e in estructuras %}<option value="{{ e.codigo }}" {% if filtro == e.codigo %}selected{% endif %}>{{ e.codigo }} {{ e.denominacion }}</option>{% endfor %}
+    </select>
+  </label>
+</form>
+<div class="desplazable">
+<table class="numeros">
+  <thead><tr><th>Estructura</th><th>Cuenta</th><th>F.</th><th>Actualizado</th><th>Precompr.</th><th>Comprometido</th><th>Causado</th><th>Pagado</th><th>Disponible</th></tr></thead>
+  <tbody>
+  {% for p in lista %}
+  <tr>
+    <td class="codigo">{{ p.estructura.codigo }}</td>
+    <td class="texto"><a class="codigo" href="/mayor/G/{{ p.id }}">{{ p.cuenta.codigo }}</a> <span class="denom">{{ p.cuenta.denominacion }}</span></td>
+    <td>{{ p.fuente.codigo }}</td>
+    <td>{{ p.actualizado|bs }}</td><td>{{ p.precomprometido|bs }}</td><td>{{ p.comprometido|bs }}</td>
+    <td>{{ p.causado|bs }}</td><td>{{ p.pagado|bs }}</td><td><strong>{{ p.disponible|bs }}</strong></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="9" class="vacio">No hay partidas. El administrador las crea con la apertura del presupuesto.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if usuario.rol != 'consulta' %}
+<h2>Agregar partida sin asignación</h2>
+<p class="sutil">Sirve para recibir recursos por traspaso o crédito adicional.</p>
+<form method="post" action="/gastos" class="rejilla">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label>Estructura
+    <select name="estructura" required>{% for e in estructuras %}<option value="{{ e.codigo }}">{{ e.codigo }} {{ e.denominacion }}</option>{% endfor %}</select>
+  </label>
+  <label>Cuenta <input name="cuenta" placeholder="4.02.08.09.00" required></label>
+  <label>Fuente
+    <select name="fuente">{% for f in fuentes %}<option value="{{ f.codigo }}">{{ f.codigo }} {{ f.denominacion }}</option>{% endfor %}</select>
+  </label>
+  <button>Agregar</button>
+</form>
+{% endif %}
+{% endblock %}
